@@ -47,14 +47,24 @@ foreach ($Link in $10Klinkarray)
     {
         $t = Invoke-WebRequest $Link -SessionVariable c
 #Grab the actual link to the 10K       
-        $10KLink = $t.Links.href[9] 
+        $10KLink = $t.Links.href | Where-Object {$_ -like "*10K*"}
         $10KLink = $RootURL + $10KLink  
         $u = Invoke-WebRequest $10KLink -SessionVariable d
-    }
-
-
-
-# KEY METRICS!!!
+	
+	$RelvantDetails = [10KObject]@ {
+		Full10K = $u.Content
+	}
+	
+	$Text10k = $u.Content
+	$EndString = $Text10k.IndexOf('ITEM&nbsp;9.')
+	$Item8 = $u.Content.Substring(0, $Endstring)
+	
+	#substring and indexof methods will match on the table of contents rather than the sections theselves. 
+	#Need to regex substring to match the SECOND occurance of the $EndString
+	#Or, just scratch the first two pages of the filing - change to string[] and foreach($Line)
+	
+	
+	# KEY METRICS!!!
 # Revenue or Net Revenues - NR
 # COGS or Cost of Net Revenues - CNR
 # Gross Profit - GP (equal to NR - CNR)
