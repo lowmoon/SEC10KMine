@@ -67,52 +67,9 @@ foreach($Ticker in $Tickers)
     #Get historical earnings dates
     $BaseEarningsURL = "https://ycharts.com/companies/$Ticker/eps"
     [System.Uri]$url = $BaseEarningsURL
-    $rqst = Invoke-WebRequest $url
-	$EarningsDates = ($rqst.ParsedHtml.getElementsByTagName('td') | Where-Object { $_.ClassName -eq 'col1' }).innertext
-	$EarningsDates = $EarningsDates | Select-Object -First 50
-	
-	#Find Friday of earnings date weeks
-	$FridaysOfEarnings = @()
-	foreach ($EarningsDate in $EarningsDates)
-	{
-		$EarningsDate = [datetime]$EarningsDate
-		
-		if ($EarningsDate.DayofWeek -Like "*Friday*")
-		{
-			$EarningsDate = $EarningsDate.ToString('MMMM dd, yyyy')
-			$FridaysOfEarnings += $EarningsDate
-		}
-		elseif ($EarningsDate.DayOfWeek -notlike "*Friday*")
-		{
-			do
-			{
-				$EarningsDate = $EarningsDate.AddDays(1)
-			}
-			until ($EarningsDate.DayOfWeek -like "*Friday*")
-			
-			$EarningsDate = $EarningsDate.ToString('MMMM dd, yyyy')
-			$FridaysOfEarnings += $EarningsDate
-		}	
-	}
-	
-	$PriceHistory = Import-CSV C:\Temp\$Ticker.csv -Header Date, Open, High, Low, AdjClose, Volume
-	
-	foreach ($Friday in $FridaysOfEarnings)
-	{
-		
-		foreach ($Line in $PriceHistory)
-		{
-			if ($Line.Date -like "*$Friday*")
-			{
-				$Line.Date	
-			}
-		}	
-	}
-	#stopped here, some wonky stuff with a do/while $d++ to increment days until "Friday" appears, maybe a [datetime].ToString?
-	
-	
-}
-
+    $rqst = Invoke-WebRequest $url 
+    $rqst.ParsedHtml.getElementsByTagName()
+    #stopped here - need to grab the td.col1 for earnings dates.. is there a better source for this?
 }
 
 clear-host
