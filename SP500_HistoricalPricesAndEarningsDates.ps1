@@ -73,9 +73,11 @@ foreach($Ticker in $Tickers)
 	
 	#Find Friday of earnings date weeks
 	$FridaysOfEarnings = @()
+	$AllEarningsDates = @()
 	foreach ($EarningsDate in $EarningsDates)
 	{
-		$EarningsDate = [datetime]$EarningsDate
+		$AllEarningsDates += $EarningsDate
+		[datetime]$EarningsDate = $EarningsDate 
 		
 		if ($EarningsDate.DayofWeek -Like "*Friday*")
 		{
@@ -97,21 +99,36 @@ foreach($Ticker in $Tickers)
 	
 	$PriceHistory = Import-CSV C:\Temp\$Ticker.csv -Header Date, Open, High, Low, AdjClose, Volume
 	
+	$EarningsFridayClosePrices = @()
+	$EarningsDayClosePrices = @()
+	
 	foreach ($Friday in $FridaysOfEarnings)
-	{
-		
+	{		
 		foreach ($Line in $PriceHistory)
 		{
-			if ($Line.Date -like "*$Friday*")
+			$CloseDate = $Line.Date
+			[datetime]$CloseDate = $CloseDate
+			
+			if ($CloseDate -eq $Friday)
 			{
-				$Line.Date	
+				$EarningsFridayClosePrice = $Line.AdjClose
+				$EarningsFridayClosePrices += $EarningsFridayClosePrice
 			}
-		}	
-	}
-	#stopped here, some wonky stuff with a do/while $d++ to increment days until "Friday" appears, maybe a [datetime].ToString?
-	
-	
+			
+			
+#			foreach ($Date in $AllEarningsDates)
+#			{
+#				if ($CloseDate -eq $Date)
+#				{
+#					$EarningsDayClosePrice = $Line.AdjClose
+#					$EarningsDayClosePrices += $EarningsDayClosePrice
+#				}
+#			}
+		}
+	}	
 }
+
+
 
 }
 
