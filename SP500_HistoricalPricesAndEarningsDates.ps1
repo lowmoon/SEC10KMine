@@ -75,9 +75,9 @@ foreach($Ticker in $Tickers)
 	$FridaysOfEarnings = @()
 	$AllEarningsDates = @()
 	foreach ($EarningsDate in $EarningsDates)
-	{
+	{	
+		[datetime]$EarningsDate = $EarningsDate
 		$AllEarningsDates += $EarningsDate
-		[datetime]$EarningsDate = $EarningsDate 
 		
 		if ($EarningsDate.DayofWeek -Like "*Friday*")
 		{
@@ -101,6 +101,7 @@ foreach($Ticker in $Tickers)
 	
 	$EarningsFridayClosePrices = @()
 	$EarningsDayClosePrices = @()
+	$DayBeforeEarningsClosePrices = @()
 	
 	foreach ($Friday in $FridaysOfEarnings)
 	{		
@@ -116,16 +117,29 @@ foreach($Ticker in $Tickers)
 			}
 			
 			
-#			foreach ($Date in $AllEarningsDates)
-#			{
-#				if ($CloseDate -eq $Date)
-#				{
-#					$EarningsDayClosePrice = $Line.AdjClose
-#					$EarningsDayClosePrices += $EarningsDayClosePrice
-#				}
-#			}
+			foreach ($Date in $AllEarningsDates)
+			{
+				if ($CloseDate -eq $Date)
+				{
+					$EarningsDayClosePrice = $Line.AdjClose
+					$EarningsDayClosePrices += $EarningsDayClosePrice
+					
+				}
+				
+				$DayBeforeEarnings = $Date.AddDays(-1)
+				
+				if ($CloseDate -eq $DayBeforeEarnings)
+				{
+					$DayBeforeEarningsClosePrice = $Line.AdjClose
+					$DayBeforeEarningsClosePrices += $DayBeforeEarningsClosePrice
+				}	
+			}
 		}
-	}	
+	}
+	
+	#stopped here, need to get .Counts lined up for all dates and close prices, should be 50 all 
+	#need n++ for array objects to find % difference
+	
 }
 
 
