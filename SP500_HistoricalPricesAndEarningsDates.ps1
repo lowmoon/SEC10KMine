@@ -1,5 +1,5 @@
-#from https://github.com/datasets/s-and-p-500-companies/blob/master/data/constituents.csv
-$Tickers = Import-CSV C:\Temp\constituents.csv -Header Symbol 
+#https://github.com/datasets/s-and-p-500-companies/blob/master/data/constituents.csv
+$Tickers = 
 
 function ConvertFrom-HtmlTableRow {
     [CmdletBinding()]
@@ -53,16 +53,6 @@ function ConvertFrom-HtmlTable {
 
 foreach($Ticker in $Tickers)
 {
-    #Get Historical Pricing
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $HistoricalBaseURL = "https://www.investopedia.com/markets/api/partial/historical/?Symbol=$Ticker&Type=%20Historical+Prices&Timeframe=Daily&StartDate=Jan+01%2C+2009&EndDate=Feb+08%2C+2019"
-    
-    [System.Uri]$url = $HistoricalBaseURL
-    $rqst = Invoke-WebRequest $url 
-    $rqst.ParsedHtml.getElementsByTagName('table') | ConvertFrom-HtmlTable | Export-CSV C:\Temp\$Ticker.csv
-    #Store historical pricing in CSV for each ticker
-    $NoHeaders = Import-CSV -Header Date,Open,High,Low,AdjClose,Volume C:\Temp\$Ticker.csv 
-    $NoHeaders | Export-CSV -NoTypeInformation C:\Temp\$Ticker.csv
 
     #Get historical earnings dates
     $BaseEarningsURL = "https://ycharts.com/companies/$Ticker/eps"
@@ -70,80 +60,7 @@ foreach($Ticker in $Tickers)
     $rqst = Invoke-WebRequest $url
 	$EarningsDates = ($rqst.ParsedHtml.getElementsByTagName('td') | Where-Object { $_.ClassName -eq 'col1' }).innertext
 	$EarningsDates = $EarningsDates | Select-Object -First 50
-	
-	#Find Friday of earnings date weeks
-	$FridaysOfEarnings = @()
-	$AllEarningsDates = @()
-	foreach ($EarningsDate in $EarningsDates)
-	{	
-		[datetime]$EarningsDate = $EarningsDate
-		$AllEarningsDates += $EarningsDate
 		
-		if ($EarningsDate.DayofWeek -Like "*Friday*")
-		{
-			$EarningsDate = $EarningsDate.ToString('MMMM dd, yyyy')
-			$FridaysOfEarnings += $EarningsDate
-		}
-		elseif ($EarningsDate.DayOfWeek -notlike "*Friday*")
-		{
-			do
-			{
-				$EarningsDate = $EarningsDate.AddDays(1)
-			}
-			until ($EarningsDate.DayOfWeek -like "*Friday*")
-			
-			$EarningsDate = $EarningsDate.ToString('MMMM dd, yyyy')
-			$FridaysOfEarnings += $EarningsDate
-		}	
-	}
-	
-	$PriceHistory = Import-CSV C:\Temp\$Ticker.csv -Header Date, Open, High, Low, AdjClose, Volume
-	
-	$EarningsFridayClosePrices = @()
-	$EarningsDayClosePrices = @()
-	$DayBeforeEarningsClosePrices = @()
-	
-	foreach ($Friday in $FridaysOfEarnings)
-	{		
-		foreach ($Line in $PriceHistory)
-		{
-			$CloseDate = $Line.Date
-			[datetime]$CloseDate = $CloseDate
-			
-			if ($CloseDate -eq $Friday)
-			{
-				$EarningsFridayClosePrice = $Line.AdjClose
-				$EarningsFridayClosePrices += $EarningsFridayClosePrice
-			}
-			
-			
-			foreach ($Date in $AllEarningsDates)
-			{
-				if ($CloseDate -eq $Date)
-				{
-					$EarningsDayClosePrice = $Line.AdjClose
-					$EarningsDayClosePrices += $EarningsDayClosePrice
-					
-				}
-				
-				$DayBeforeEarnings = $Date.AddDays(-1)
-				
-				if ($CloseDate -eq $DayBeforeEarnings)
-				{
-					$DayBeforeEarningsClosePrice = $Line.AdjClose
-					$DayBeforeEarningsClosePrices += $DayBeforeEarningsClosePrice
-				}	
-			}
-		}
-	}
-	
-	#stopped here, need to get .Counts lined up for all dates and close prices, should be 50 all 
-	#need n++ for array objects to find % difference
-	
-}
-
-
-
 }
 
 clear-host
