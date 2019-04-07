@@ -1,5 +1,16 @@
 #https://github.com/datasets/s-and-p-500-companies/blob/master/data/constituents.csv
-$Tickers = 
+#https://financialmodelingprep.com/developer/docs
+$EarningsDatesArray = @()
+$MisingERData = @()
+
+function LoadTickers
+{
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	$AllTickersURI = "https://financialmodelingprep.com/api/stock/list/all?datatype=json"
+	[System.Uri]$url = $AllTickersURI
+	$rqst = Invoke-RestMethod $url
+	$Tickers = $rqst.ticker
+}
 
 function ConvertFrom-HtmlTableRow {
     [CmdletBinding()]
@@ -50,17 +61,33 @@ function ConvertFrom-HtmlTable {
     }
 }
 
-
-foreach($Ticker in $Tickers)
+function GetEarningsDates
 {
-
-    #Get historical earnings dates
-    $BaseEarningsURL = "https://ycharts.com/companies/$Ticker/eps"
-    [System.Uri]$url = $BaseEarningsURL
-    $rqst = Invoke-WebRequest $url
-	$EarningsDates = ($rqst.ParsedHtml.getElementsByTagName('td') | Where-Object { $_.ClassName -eq 'col1' }).innertext
-	$EarningsDates = $EarningsDates | Select-Object -First 50
-		
+	foreach ($Ticker in $Tickers)
+	{
+		#Get historical earnings dates
+		$BaseEarningsURL = "https://ycharts.com/companies/$Ticker/eps"
+		[System.Uri]$url = $BaseEarningsURL
+		try
+		{
+			$rqst = Invoke-WebRequest $url
+		}
+		catch
+		{
+			Write-Host "No ER Data for $Ticker"
+			$MisingERData += "$Ticker`n"
+		}
+		$EarningsDates = ($rqst.ParsedHtml.getElementsByTagName('td') | Where-Object { $_.ClassName -eq 'col1' }).innertext
+		$EarningsDates = $EarningsDates | Select-Object -First 50
+		foreach ($EarningsDate in $EarningsDates)
+		{
+			$EarningsDatesArray += "$Ticker" + " - " + "$EarningsDate`n"
+		}
+	}
 }
 
+function GetEarningsDate
+{
+	
+}
 clear-host
