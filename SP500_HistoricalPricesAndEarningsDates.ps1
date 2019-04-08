@@ -81,7 +81,7 @@ function GetEarningsDates
 		$EarningsDates = $EarningsDates | Select-Object -First 50
 		foreach ($EarningsDate in $EarningsDates)
 		{
-			$EarningsDatesArray += "$Ticker" + " - " + "$EarningsDate`n"
+			$EarningsDatesArray += "$Ticker" + "-" + "$EarningsDate`n"
 		}
 	}
 }
