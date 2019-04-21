@@ -86,8 +86,22 @@ function GetEarningsDates
 	}
 }
 
-function GetEarningsDate
+function GetEarningsDateOpenPrice
 {
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	$HistorialPriceURI = "https://financialmodelingprep.com/api/company/historical-price/" + $Ticker +"?serietype=candle"
+	[System.Uri]$url = $HistorialPriceURI
+	$rqst = Invoke-RestMethod $url
+	
+	foreach ($EDate in $EarningsDatesArray)
+	{
+		$DashSep = $EDate.IndexOf("-")
+		$Tick = $EDate.SubString(0, $DashSep)
+		$EDate = $EDate.SubString($DashSep + 1)
+		
+		$HistorialDates = $rqst.date.Trim("")
+		$HistorialDates = $HistorialDates.Trim("")
+	}
 	
 }
 clear-host
