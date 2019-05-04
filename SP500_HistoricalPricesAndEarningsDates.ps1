@@ -81,7 +81,7 @@ function GetEarningsDates
 		$EarningsDates = $EarningsDates | Select-Object -First 50
 		foreach ($EarningsDate in $EarningsDates)
 		{
-			$EarningsDatesArray += "$Ticker" + "-" + "$EarningsDate`n"
+			$EarningsDatesArray += $EarningsDate.Replace(",","")
 		}
 	}
 }
@@ -89,18 +89,26 @@ function GetEarningsDates
 function GetEarningsDateOpenPrice
 {
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-	$HistorialPriceURI = "https://financialmodelingprep.com/api/company/historical-price/" + $Ticker +"?serietype=candle"
+	$HistorialPriceURI = "https://financialmodelingprep.com/api/company/historical-price/" + $Ticker + "?serietype=candle&datatype=json"
 	[System.Uri]$url = $HistorialPriceURI
 	$rqst = Invoke-RestMethod $url
 	
-	foreach ($EDate in $EarningsDatesArray)
+	$HistoricalDatesAndOpens = $rqst.historical | Select-Object Date, Open
+	$WithShortDate = $HistoricalDatesAndOpens | Select-Object -Property *, @{ LABEL = 'ShortDate'; EXPRESSION = { $_.Date.SubString(0, 14) } }
+	$HistoricalDatesandOpensFormatted = $WithShortDate | Select-Object ShortDate, Open
+	$EarningsDateOpenPrices = @()
+	foreach ($DateAndOpen in $HistoricalDatesandOpensFormatted)
 	{
-		$DashSep = $EDate.IndexOf("-")
-		$Tick = $EDate.SubString(0, $DashSep)
-		$EDate = $EDate.SubString($DashSep + 1)
-		
-		$HistorialDates = $rqst.date.Trim("")
-		$HistorialDates = $HistorialDates.Trim("")
+		foreach ($EDate in $EarningsDatesArray)
+		{
+			if ($DateAndOpen.ShortDate.SubString($DateAndOpen.ShortDate.Length - 7, 7) -contains $EDate.Substring($EDate.Length - 7, 7))
+			{
+				
+				$EarningsDateOpenPrices += $EDate, $DateAndOpen.ShortDate, $DateAndOpen.Open
+				#matches too many dates on just day and year, need to convert short month abbrevation to numbered month in $EarningsDatesArray
+				#Standarize date formats.
+			}
+		}
 	}
 	
 }
